@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<project name="generic" default="create-jar" basedir=".">
+
+	<!-- app -->
+	<property file="${basedir}/src/main/resources/config/config.properties"/>
+	<property name="app.jar.name" 		value="generic" />
+	<property name="app.version.spec" 	value="${app.version}" />
+	<property name="app.version.impl" 	value="${app.version}" />
+	<property name="app.main" 			value="com.inetum.abc.generic.main.Main" />
+
+	<!-- root -->
+	<property name="root.dir" 			value="${basedir}" />
+	<property name="src.dir" 			value="${root.dir}/src" />
+	<property name="lib.dir" 			value="${root.dir}/libs" />
+	<property name="dist.dir" 			value="${root.dir}/dist" />
+	<property name="build.dir" 			value="${dist.dir}/build" />
+	<property name="apidoc.dir" 		value="${root.dir}/docs/apidoc" />
+	<property name="jar" 				value="${app.jar.name}-${app.version.impl}" />
+
+	<!-- src -->
+	<property name="main.dir" 			value="${src.dir}/main/java" />
+	<property name="resources.dir" 		value="${src.dir}/main/resources" />
+	<property name="test.dir" 			value="${src.dir}/test/java" />
+
+
+	<target name="-init" description="Inicializa las variables">
+
+		<!-- classpath -->
+		<path id="classpath">
+			<fileset dir="${lib.dir}">
+				<include name="**/*.jar" />
+			</fileset>
+		</path>
+
+		<!-- sourcepath -->
+		<path id="sourcepath">
+			<pathelement path="${main.dir}" />
+		</path>
+
+	</target>
+
+	<target name="clean" description="Borra los directorios">
+		<delete dir="${apidoc.dir}" />
+		<delete dir="${build.dir}" />
+		<delete dir="${dist.dir}" />
+	</target>
+
+	<target name="-resources" description="Copia los recursos">
+		<copy todir="${build.dir}">
+			<fileset dir="${resources.dir}">
+				<include name="**/*.*" />
+				<exclude name="**/*.java" />
+				<exclude name="**/*.iml" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="-compile" depends="-resources" description="Compila los fuentes">
+		<mkdir  dir="${build.dir}" />
+		<javac	includeantruntime="false"
+				source="1.8"
+				target="1.8"
+				destdir="${build.dir}"
+				classpathref="classpath"
+				debug="false"
+				deprecation="on"
+				optimize="on"
+				encoding="ISO-8859-1">
+			<src refid="sourcepath" />
+		</javac>
+	</target>
+
+	<target name="apidoc" depends="-init" description="Genera documentacion de la api">
+		<delete dir="${apidoc.dir}" />
+		<mkdir  dir="${apidoc.dir}" />
+		<javadoc destdir="${apidoc.dir}" sourcepathref="sourcepath" classpathref="classpath" packagenames="*.*">
+		</javadoc>
+	</target>
+
+	<target name="create-jar" depends="-init,clean,-compile" description="Crea la libreria">
+		<mkdir dir="${dist.dir}"/>
+		<delete file="${dist.dir}/${jar}.jar"/>
+		
+		<manifestclasspath property="manifest.classpath" jarfile="${jar}.jar">
+			<classpath refid="classpath" />
+		</manifestclasspath>
+		
+		<jar jarfile="${dist.dir}/${jar}.jar" basedir="${build.dir}">
+			<manifest>
+				<attribute name="Specification-Version" value="${app.version.spec}" />
+				<attribute name="Implementation-Version" value="${app.version.impl}" />
+				<attribute name="Class-Path" value="${manifest.classpath}" />
+				<attribute name="Main-Class" value="${app.main}" />
+			</manifest>
+		</jar>
+	</target>
+</project>
